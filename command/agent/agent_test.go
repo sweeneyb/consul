@@ -145,6 +145,7 @@ func TestAgentStartStop(t *testing.T) {
 func TestAgent_RPCPing(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	var out struct{}
@@ -160,6 +161,7 @@ func TestAgent_CheckAdvertiseAddrsSettings(t *testing.T) {
 	c.AdvertiseAddrs.RPC, _ = net.ResolveTCPAddr("tcp", "127.0.0.44:1235")
 	dir, agent := makeAgent(t, c)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	serfLanAddr := agent.consulConfig().SerfLANConfig.MemberlistConfig.AdvertiseAddr
@@ -195,6 +197,7 @@ func TestAgent_ReconnectConfigSettings(t *testing.T) {
 	func() {
 		dir, agent := makeAgent(t, c)
 		defer os.RemoveAll(dir)
+		defer agent.Leave()
 		defer agent.Shutdown()
 
 		lan := agent.consulConfig().SerfLANConfig.ReconnectTimeout
@@ -213,6 +216,7 @@ func TestAgent_ReconnectConfigSettings(t *testing.T) {
 	func() {
 		dir, agent := makeAgent(t, c)
 		defer os.RemoveAll(dir)
+		defer agent.Leave()
 		defer agent.Shutdown()
 
 		lan := agent.consulConfig().SerfLANConfig.ReconnectTimeout
@@ -230,6 +234,7 @@ func TestAgent_ReconnectConfigSettings(t *testing.T) {
 func TestAgent_AddService(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// Service registration with a single check
@@ -328,6 +333,7 @@ func TestAgent_AddService(t *testing.T) {
 func TestAgent_RemoveService(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// Remove a service that doesn't exist
@@ -427,6 +433,7 @@ func TestAgent_RemoveService(t *testing.T) {
 func TestAgent_AddCheck(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	health := &structs.HealthCheck{
@@ -464,6 +471,7 @@ func TestAgent_AddCheck(t *testing.T) {
 func TestAgent_AddCheck_StartPassing(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	health := &structs.HealthCheck{
@@ -501,6 +509,7 @@ func TestAgent_AddCheck_StartPassing(t *testing.T) {
 func TestAgent_AddCheck_MinInterval(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	health := &structs.HealthCheck{
@@ -534,6 +543,7 @@ func TestAgent_AddCheck_MinInterval(t *testing.T) {
 func TestAgent_AddCheck_MissingService(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	health := &structs.HealthCheck{
@@ -555,6 +565,7 @@ func TestAgent_AddCheck_MissingService(t *testing.T) {
 func TestAgent_AddCheck_RestoreState(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// Create some state and persist it
@@ -598,6 +609,7 @@ func TestAgent_AddCheck_RestoreState(t *testing.T) {
 func TestAgent_RemoveCheck(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// Remove check that doesn't exist
@@ -644,6 +656,7 @@ func TestAgent_RemoveCheck(t *testing.T) {
 func TestAgent_UpdateCheck(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	health := &structs.HealthCheck{
@@ -678,6 +691,7 @@ func TestAgent_UpdateCheck(t *testing.T) {
 func TestAgent_ConsulService(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	testutil.WaitForLeader(t, agent.RPC, "dc1")
@@ -704,6 +718,7 @@ func TestAgent_PersistService(t *testing.T) {
 	config.Server = false
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	svc := &structs.NodeService{
@@ -764,6 +779,7 @@ func TestAgent_PersistService(t *testing.T) {
 	if !bytes.Equal(expected, content) {
 		t.Fatalf("bad: %s", string(content))
 	}
+	agent.Leave()
 	agent.Shutdown()
 
 	// Should load it back during later start
@@ -771,6 +787,7 @@ func TestAgent_PersistService(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	defer agent2.Leave()
 	defer agent2.Shutdown()
 
 	restored, ok := agent2.state.services[svc.ID]
@@ -790,6 +807,7 @@ func TestAgent_persistedService_compat(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	svc := &structs.NodeService{
@@ -835,6 +853,7 @@ func TestAgent_PurgeService(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	svc := &structs.NodeService{
@@ -871,6 +890,7 @@ func TestAgent_PurgeServiceOnDuplicate(t *testing.T) {
 	config.Server = false
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	svc1 := &structs.NodeService{
@@ -900,6 +920,7 @@ func TestAgent_PurgeServiceOnDuplicate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	defer agent2.Leave()
 	defer agent2.Shutdown()
 
 	file := filepath.Join(agent.config.DataDir, servicesDir, stringHash(svc1.ID))
@@ -920,6 +941,7 @@ func TestAgent_PersistCheck(t *testing.T) {
 	config.Server = false
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	check := &structs.HealthCheck{
@@ -986,6 +1008,7 @@ func TestAgent_PersistCheck(t *testing.T) {
 	if !bytes.Equal(expected, content) {
 		t.Fatalf("bad: %s", string(content))
 	}
+	agent.Leave()
 	agent.Shutdown()
 
 	// Should load it back during later start
@@ -993,6 +1016,7 @@ func TestAgent_PersistCheck(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	defer agent2.Leave()
 	defer agent2.Shutdown()
 
 	result, ok := agent2.state.checks[check.CheckID]
@@ -1019,6 +1043,7 @@ func TestAgent_PurgeCheck(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	check := &structs.HealthCheck{
@@ -1055,6 +1080,7 @@ func TestAgent_PurgeCheckOnDuplicate(t *testing.T) {
 	config.Server = false
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	check1 := &structs.HealthCheck{
@@ -1068,6 +1094,7 @@ func TestAgent_PurgeCheckOnDuplicate(t *testing.T) {
 	if err := agent.AddCheck(check1, nil, true, ""); err != nil {
 		t.Fatalf("err: %v", err)
 	}
+	agent.Leave()
 	agent.Shutdown()
 
 	// Start again with the check registered in config
@@ -1086,6 +1113,7 @@ func TestAgent_PurgeCheckOnDuplicate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	defer agent2.Leave()
 	defer agent2.Shutdown()
 
 	file := filepath.Join(agent.config.DataDir, checksDir, checkIDHash(check1.CheckID))
@@ -1114,6 +1142,7 @@ func TestAgent_loadChecks_token(t *testing.T) {
 	})
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	checks := agent.state.Checks()
@@ -1129,6 +1158,7 @@ func TestAgent_unloadChecks(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// First register a service
@@ -1188,6 +1218,7 @@ func TestAgent_loadServices_token(t *testing.T) {
 	})
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	services := agent.state.Services()
@@ -1203,6 +1234,7 @@ func TestAgent_unloadServices(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	svc := &structs.NodeService{
@@ -1251,6 +1283,7 @@ func TestAgent_ServiceMaintenanceMode(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	svc := &structs.NodeService{
@@ -1316,6 +1349,7 @@ func TestAgent_addCheck_restoresSnapshot(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// First register a service
@@ -1360,6 +1394,7 @@ func TestAgent_NodeMaintenanceMode(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// Enter maintenance mode for the node
@@ -1406,6 +1441,7 @@ func TestAgent_checkStateSnapshot(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// First register a service
@@ -1464,6 +1500,7 @@ func TestAgent_loadChecks_checkFails(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// Persist a health check with an invalid service ID
@@ -1500,6 +1537,7 @@ func TestAgent_persistCheckState(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// Create the TTL check to persist
@@ -1548,6 +1586,7 @@ func TestAgent_loadCheckState(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// Create a check whose state will expire immediately
@@ -1610,6 +1649,7 @@ func TestAgent_purgeCheckState(t *testing.T) {
 	config := nextConfig()
 	dir, agent := makeAgent(t, config)
 	defer os.RemoveAll(dir)
+	defer agent.Leave()
 	defer agent.Shutdown()
 
 	// No error if the state does not exist
@@ -1645,6 +1685,7 @@ func TestAgent_GetCoordinate(t *testing.T) {
 		config.Server = server
 		dir, agent := makeAgent(t, config)
 		defer os.RemoveAll(dir)
+		defer agent.Leave()
 		defer agent.Shutdown()
 
 		// This doesn't verify the returned coordinate, but it makes
