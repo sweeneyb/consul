@@ -153,6 +153,8 @@ type Agent struct {
 	endpoints     map[string]string
 	endpointsLock sync.RWMutex
 
+	dnsEnabled bool
+
 	// dnsAddr is the address the DNS server binds to
 	dnsAddrs []ProtoAddr
 
@@ -177,8 +179,11 @@ func New(c *Config) (*Agent, error) {
 		return nil, fmt.Errorf("Must configure a DataDir")
 	}
 	dnsAddrs, err := c.DNSAddrs()
-	if err != nil {
+	dnsEnabled := c.DNSConfig.DnsEnabled
+	if dnsEnabled {
+	if err != nil && dnsEnabled {
 		return nil, fmt.Errorf("Invalid DNS bind address: %s", err)
+	}
 	}
 	httpAddrs, err := c.HTTPAddrs()
 	if err != nil {
@@ -206,6 +211,7 @@ func New(c *Config) (*Agent, error) {
 		endpoints:      make(map[string]string),
 		dnsAddrs:       dnsAddrs,
 		httpAddrs:      httpAddrs,
+		dnsEnabled: 	dnsEnabled,
 	}
 	if err := a.resolveTmplAddrs(); err != nil {
 		return nil, err
@@ -291,8 +297,10 @@ func (a *Agent) Start() error {
 	}
 
 	// start DNS servers
+	if a.dnsEnabled {
 	if err := a.listenAndServeDNS(); err != nil {
 		return err
+	}
 	}
 
 	// create listeners and unstarted servers

@@ -64,6 +64,8 @@ type AdvertiseAddrsConfig struct {
 // It can be used to control cache values, and stale
 // reads
 type DNSConfig struct {
+
+	DnsEnabled bool
 	// NodeTTL provides the TTL value for a node query
 	NodeTTL    time.Duration `mapstructure:"-"`
 	NodeTTLRaw string        `mapstructure:"node_ttl" json:"-"`
@@ -906,6 +908,7 @@ func DefaultConfig() *Config {
 			UDPAnswerLimit:  3,
 			MaxStale:        10 * 365 * 24 * time.Hour,
 			RecursorTimeout: 2 * time.Second,
+			DnsEnabled:	 true,
 		},
 		Telemetry: Telemetry{
 			StatsitePrefix: "consul",
