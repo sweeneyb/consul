@@ -181,9 +181,9 @@ func New(c *Config) (*Agent, error) {
 	dnsAddrs, err := c.DNSAddrs()
 	dnsEnabled := c.DNSConfig.DnsEnabled
 	if dnsEnabled {
-	if err != nil && dnsEnabled {
-		return nil, fmt.Errorf("Invalid DNS bind address: %s", err)
-	}
+		if err != nil && dnsEnabled {
+			return nil, fmt.Errorf("Invalid DNS bind address: %s", err)
+		}
 	}
 	httpAddrs, err := c.HTTPAddrs()
 	if err != nil {
@@ -211,7 +211,7 @@ func New(c *Config) (*Agent, error) {
 		endpoints:      make(map[string]string),
 		dnsAddrs:       dnsAddrs,
 		httpAddrs:      httpAddrs,
-		dnsEnabled: 	dnsEnabled,
+		dnsEnabled:     dnsEnabled,
 	}
 	if err := a.resolveTmplAddrs(); err != nil {
 		return nil, err
@@ -298,9 +298,9 @@ func (a *Agent) Start() error {
 
 	// start DNS servers
 	if a.dnsEnabled {
-	if err := a.listenAndServeDNS(); err != nil {
-		return err
-	}
+		if err := a.listenAndServeDNS(); err != nil {
+			return err
+		}
 	}
 
 	// create listeners and unstarted servers
